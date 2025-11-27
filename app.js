@@ -26,6 +26,12 @@ app.use(cors({
   methods: ["GET","POST","PUT","DELETE"],
   credentials: true
 }));
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "https://qr-manager-beige.vercel.app");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
+app.options("*", cors());
 app.use(express.json());
 app.use(cookieParser());
 
@@ -85,10 +91,10 @@ app.post('/signup', async (req, res) => {
         await newUser.save();
         const token = jwt.sign({ userId: newUser._id }, secretKey, { expiresIn: exp });
 
-        res.cookie('token', token, {
-            httpOnly: true,    // Prevent frontend JS from reading it
-            secure: false,     // Set to true in production (HTTPS)
-            sameSite: 'lax'
+       res.cookie('token', token, {
+          httpOnly: true,
+          secure: true,      // Required when using HTTPS domains
+          sameSite: 'none'   // Required for cross-site cookies
         });
         return res.status(201).json({ msg: 'Account created successfully. redirecting...' });
     } catch (error) {
@@ -109,9 +115,9 @@ app.post('/login', async (req, res) => {
         if (await bcrypt.compare(password, user.hashedPassword)) {
             const token = jwt.sign({ userId: user._id }, secretKey, { expiresIn: exp });
             res.cookie('token', token, {
-                httpOnly: true,
-                secure: false,
-                sameSite: 'lax'
+              httpOnly: true,
+              secure: true,      // Required when using HTTPS domains
+              sameSite: 'none'   // Required for cross-site cookies
             });
             return res.status(200).json({ msg: 'Login successful. redirecting...' });
         } else {
