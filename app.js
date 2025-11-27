@@ -24,11 +24,14 @@ const BASE_URL = "https://qr-manager-server-gec1.onrender.com";
 
 
 // Middleware
-app.use(cors({
+const corsOptions = {
   origin: "https://qr-manager-beige.vercel.app",
-  methods: ["GET","POST","PUT","DELETE"],
-  credentials: true
-}));
+  credentials: true,  // important for cookies
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
