@@ -19,6 +19,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const secretKey = process.env.JWT_SECRET;
 const exp = process.env.JWT_LIMIT;
+const BASE_URL = "https://qr-manager-server-gec1.onrender.com";
+
+
 
 // Middleware
 app.use(cors({
@@ -26,11 +29,7 @@ app.use(cors({
   methods: ["GET","POST","PUT","DELETE"],
   credentials: true
 }));
-app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "https://qr-manager-beige.vercel.app");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  next();
-});
+
 app.options("*", cors());
 app.use(express.json());
 app.use(cookieParser());
@@ -145,7 +144,7 @@ app.post('/api/genqrcode', async (req, res) => {
         }
         const newQR = new QRCode({ createdBy: userId, url: url, title: title });
         await newQR.save();
-        const dynamicUrl = `http://localhost:3000/redirect/${newQR._id}`;
+        const dynamicUrl = `${BASE_URL}/redirect/${newQR._id}`;
         try {
             const qrDataUrl = await QRcode.toDataURL(dynamicUrl);
             return res.status(201).json({ qrImageUrl: qrDataUrl, msg: 'QR code generated successfully' });
@@ -274,7 +273,7 @@ app.get('/api/overview', async (req, res) => {
         }
         const qrCodesWithImage = await Promise.all(
             qrCodes.map(async (doc) => {
-                const qrDataUrl = await QRcode.toDataURL(`http://localhost:3000/redirect/${doc._id}`);
+                const qrDataUrl = await QRcode.toDataURL(`${BASE_URL}/redirect/${doc._id}`);
                 return {
                     ...doc.toObject(),
                     qrDataUrl
