@@ -160,20 +160,37 @@ app.post('/api/genqrcode', async (req, res) => {
 
 app.get('/redirect/:id', async (req, res) => {
     const qrId = req.params.id;
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
     try {
         const qrCode = await QRCode.findById(qrId);
         if (!qrCode) {
-            return res.status(404).json({ msg: 'QR code not found' });
+            return res.status(404).send('QR code not found');
         }
 
-        ScanLog.create({ qrId: qrCode._id, userId: qrCode.createdBy })
-            .catch(err => console.error('ScanLog error:', err));
+        // Check recent scan
+        const recentScan = await ScanLog.findOne({
+            qrId: qrCode._id,
+            ip,
+            createdAt: { $gt: new Date(Date.now() - 5000) } // last 5 sec
+        });
 
-        qrCode.clicks += 1;
-        await qrCode.save();
+        if (!recentScan) {
+            await ScanLog.create({
+                qrId: qrCode._id,
+                userId: qrCode.createdBy,
+                ip
+            });
+
+            qrCode.clicks++;
+            await qrCode.save();
+        }
+
         return res.redirect(qrCode.url);
-    } catch (error) {
-        return res.status(500).json({ msg: 'Server error' });
+
+    } catch (err) {
+        console.error(err);
+        return res.status(500).send('Server error');
     }
 });
 
