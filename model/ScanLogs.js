@@ -15,6 +15,9 @@ const ScanLogSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    userAgent: {
+        type: String,
+    },
 }, { timestamps: true });
 
 export default mongoose.model("ScanLog", ScanLogSchema);
