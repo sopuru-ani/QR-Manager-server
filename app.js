@@ -160,7 +160,12 @@ app.post('/api/genqrcode', async (req, res) => {
 
 app.get('/redirect/:id', async (req, res) => {
     const qrId = req.params.id;
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+
+    const ip =
+        req.headers['x-forwarded-for'] ||
+        req.socket.remoteAddress;
+
+    const userAgent = req.headers['user-agent'];
 
     try {
         const qrCode = await QRCode.findById(qrId);
@@ -168,18 +173,19 @@ app.get('/redirect/:id', async (req, res) => {
             return res.status(404).send('QR code not found');
         }
 
-        // Check recent scan
+        // Prevent duplicate scans within last 5 seconds
         const recentScan = await ScanLog.findOne({
             qrId: qrCode._id,
             ip,
-            createdAt: { $gt: new Date(Date.now() - 5000) } // last 5 sec
+            createdAt: { $gt: new Date(Date.now() - 5000) }
         });
 
         if (!recentScan) {
             await ScanLog.create({
                 qrId: qrCode._id,
                 userId: qrCode.createdBy,
-                ip
+                ip,
+                userAgent
             });
 
             qrCode.clicks++;
