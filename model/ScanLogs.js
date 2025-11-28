@@ -11,10 +11,10 @@ const ScanLogSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
-    timestamp: {
-        type: Date,
-        default: Date.now,
+    ip: {
+        type: String,
+        required: true,
     },
-});
+}, { timestamps: true });
 
 export default mongoose.model("ScanLog", ScanLogSchema);
