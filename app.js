@@ -139,7 +139,7 @@ app.post('/logout', (req, res) => {
 
 app.delete('/account', async (req, res) => {
     const token = req.cookies.token;
-    if (!token) return res.status(401).send('No token');
+    if (!token) return res.status(401).json({ msg: 'No token' });
 
     try {
         const decoded = jwt.verify(token, secretKey);
@@ -147,22 +147,23 @@ app.delete('/account', async (req, res) => {
 
         const { emailDel, textDel } = req.body;
         if (typeof emailDel !== 'string' || !emailDel.includes('@')) {
-            return res.status(400).send('Invalid email');
+            return res.status(400).json({ msg: 'Invalid email' });
         }
         if (!textDel) {
-            return res.status(400).send('bad request: provide necessary text');
+            return res.status(400).json({ msg: 'bad request: provide necessary text' });
         }
         if (textDel !== 'DELETE') {
-            return res.status(400).send("input must be <span style='font-weight: bold; font-family: Poppins, calibri;'>'DELETE'</span>");
+            // return res.status(400).json({ msg: "input must be <span style='font-weight: bold; font-family: Poppins, calibri;'>'DELETE'</span>" });
+            return res.status(400).json({ msg: "Input must be 'DELETE'" });
         }
         const confirmID = await User.findOne({ _id: userId });
         if (emailDel !== confirmID.email) {
-            return res.status(400).send('Invalid email (provide the email tied to this account)');
+            return res.status(400).json({ msg: 'Invalid email (provide the email tied to this account)' });
         }
 
         // const deletedUser = await User.findByIdAndDelete(userId);
         const deletedUser = await User.findByIdAndDelete(userId);
-        if (!deletedUser) return res.status(404).send('User not found');
+        if (!deletedUser) return res.status(404).json({ msg: 'User not found' });
         await QRCode.deleteMany({ createdBy: userId });
 
         res.clearCookie('token', {
@@ -170,12 +171,12 @@ app.delete('/account', async (req, res) => {
             secure: true,
             sameSite: 'none'
         });
-        res.status(200).send('Account deleted successfully');
+        res.status(200).json({ msg: 'Account deleted successfully' });
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
-            return res.status(401).send('Token is invalid. Log in and try again');
+            return res.status(401).json({ msg: 'Token is invalid. Log in and try again' });
         }
-        return res.status(500).send('Server error. Please try again');
+        return res.status(500).json({ msg: 'Server error. Please try again' });
     }
 });
 
