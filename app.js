@@ -107,8 +107,8 @@ app.post('/auth/send-code', async (req, res) => {
         });
         res.status(200).json({ msg: true });
     } catch (error) {
-        console.log(error.message);
-        res.status(400).json({msg: error.message});
+        console.log(error);
+        res.status(400).json({msg: error});
     }
 
 
