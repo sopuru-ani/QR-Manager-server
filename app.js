@@ -12,9 +12,12 @@ import connectDB from './db/connect.js';
 import User from './model/User.js';
 import QRCode from './model/QRcodes.js';
 import ScanLog from './model/ScanLogs.js';
+import Verifies from './model/Verify.js';
+
 
 dotenv.config();
 
+import { transporter } from './email.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const secretKey = process.env.JWT_SECRET;
@@ -64,6 +67,67 @@ app.get('/profile', async (req, res) => {
     }
 });
 //Login and signup routes would go here
+app.post('/auth/send-code', async (req, res) => {
+    try {
+        if (!req.body) {
+            return res.status(400).json({ msg: 'No email provided' });
+        }
+        const { email } = req.body;
+        const dontsignup = await User.findOne({ email: email });
+        if (dontsignup) {
+            return res.status(400).json({ msg: 'Email already in use' });
+        }
+        const code = Math.floor(100000 + Math.random() * 900000);
+        await Verifies.findOneAndUpdate(
+            { email },
+            {
+                code,
+                createdAt: new Date() // reset timer
+            },
+            { upsert: true, new: true }
+        );
+        await transporter.sendMail({
+            from: process.env.EMAIL,
+            to: email,
+            subject: "Verify your email",
+            html: `
+        <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f8f8f8;">
+            <h2 style="color: #333;">Your Verification Code</h2>
+            <p style="font-size: 16px; color: #555;">
+                Use the code below to verify your email:
+            </p>
+            <div style="margin: 20px auto; padding: 15px 30px; background-color: #4caf50; color: white; font-size: 24px; font-weight: bold; border-radius: 8px; display: inline-block;">
+                ${code}
+            </div>
+            <p style="font-size: 14px; color: #999; margin-top: 30px;">
+                If you did not request this, please ignore this email.
+            </p>
+        </div>
+    `
+        });
+        res.status(200).json({ msg: true });
+    } catch (error) {
+        console.log(error.message);
+    }
+
+
+});
+
+app.post('/auth/verify-code', async (req, res) => {
+    if (!req.body) {
+        return res.status(400).json({ msg: 'No data provided(i need the email and code now...)' });
+    }
+    if (!req.body.code) {
+        return res.status(400).json({ msg: 'No code provided' });
+    }
+    const { email, code } = req.body;
+    const match = await Verifies.findOne({ email, code });
+    if (!match) {
+        return res.status(404).json({ msg: false });
+    }
+    res.status(200).json({ msg: true });
+});
+
 app.post('/signup', async (req, res) => {
     if (!req.body) {
         return res.status(400).json({ msg: 'No data provided' });
@@ -91,10 +155,10 @@ app.post('/signup', async (req, res) => {
         await newUser.save();
         const token = jwt.sign({ userId: newUser._id }, secretKey, { expiresIn: exp });
 
-       res.cookie('token', token, {
-          httpOnly: true,
-          secure: true,      // Required when using HTTPS domains
-          sameSite: 'none'   // Required for cross-site cookies
+        res.cookie('token', token, {
+            httpOnly: true,    // Prevent frontend JS from reading it
+            secure: false,     // Set to true in production (HTTPS)
+            sameSite: 'lax'
         });
         return res.status(201).json({ msg: 'Account created successfully. redirecting...' });
     } catch (error) {
