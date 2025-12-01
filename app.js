@@ -30,7 +30,7 @@ const BASE_URL = "https://qr-manager-server-gec1.onrender.com";
 
 // Middleware
 const corsOptions = {
-  origin: "https://qr-manager-beige.vercel.app",
+  origin: ["https://qr-manager-beige.vercel.app", "https://www.qr-manager.net"],
   credentials: true,  // important for cookies
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
