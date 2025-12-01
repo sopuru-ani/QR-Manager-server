@@ -161,8 +161,8 @@ app.post('/signup', async (req, res) => {
 
         res.cookie('token', token, {
             httpOnly: true,    // Prevent frontend JS from reading it
-            secure: false,     // Set to true in production (HTTPS)
-            sameSite: 'lax'
+            secure: true,     // Set to true in production (HTTPS)
+            sameSite: 'none'
         });
         return res.status(201).json({ msg: 'Account created successfully. redirecting...' });
     } catch (error) {
