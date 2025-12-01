@@ -6,6 +6,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import QRcode from 'qrcode';
 import mongoose from 'mongoose';
+import { Resend } from 'resend';
 import { OAuth2Client } from 'google-auth-library';
 
 import connectDB from './db/connect.js';
@@ -22,6 +23,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const secretKey = process.env.JWT_SECRET;
 const exp = process.env.JWT_LIMIT;
+const resend = new Resend(process.env.RESEND_API_KEY);
 const BASE_URL = "https://qr-manager-server-gec1.onrender.com";
 
 
@@ -86,10 +88,10 @@ app.post('/auth/send-code', async (req, res) => {
             },
             { upsert: true, new: true }
         );
-        await transporter.sendMail({
+        await resend.emails.send({
             from: process.env.EMAIL,
             to: email,
-            subject: "Verify your email",
+            subject: "Your code",
             html: `
         <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f8f8f8;">
             <h2 style="color: #333;">Your Verification Code</h2>
