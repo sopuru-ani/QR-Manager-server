@@ -18,7 +18,7 @@ import Verifies from './model/Verify.js';
 
 dotenv.config();
 
-import { transporter } from './email.js';
+//import { transporter } from './email.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 const secretKey = process.env.JWT_SECRET;
@@ -89,7 +89,7 @@ app.post('/auth/send-code', async (req, res) => {
             { upsert: true, new: true }
         );
         await resend.emails.send({
-            from: process.env.EMAIL,
+            from: 'onboarding@resend.dev',
             to: email,
             subject: "Your code",
             html: `
