@@ -90,7 +90,7 @@ app.post('/auth/send-code', async (req, res) => {
         );
         await resend.emails.send({
             // from: "QR Manager <onboarding@resend.dev>",
-          from: "qrmanager.app@gmail.com",
+          from: "QR Manager <no-reply@qr-manager.net>",
             to: email,
             subject: "Your code",
             html: `
