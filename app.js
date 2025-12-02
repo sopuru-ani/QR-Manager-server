@@ -162,7 +162,7 @@ app.post('/signup', async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,    // Prevent frontend JS from reading it
             secure: true,     // Set to true in production (HTTPS)
-            sameSite: 'none'
+            sameSite: 'None'
         });
         return res.status(201).json({ msg: 'Account created successfully. redirecting...' });
     } catch (error) {
@@ -185,7 +185,7 @@ app.post('/login', async (req, res) => {
             res.cookie('token', token, {
               httpOnly: true,
               secure: true,      // Required when using HTTPS domains
-              sameSite: 'none'   // Required for cross-site cookies
+              sameSite: 'None'   // Required for cross-site cookies
             });
             return res.status(200).json({ msg: 'Login successful. redirecting...' });
         } else {
