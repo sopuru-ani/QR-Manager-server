@@ -29,6 +29,7 @@ const BASE_URL = "https://qr-manager-server-gec1.onrender.com";
 
 
 // Middleware
+app.set("trust proxy", 1);
 const corsOptions = {
   origin: ["https://qr-manager-beige.vercel.app", "https://www.qr-manager.net"],
   credentials: true,  // important for cookies
@@ -39,7 +40,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
-app.set("trust proxy", 1);
+
 
 function isValidUrl(url) {
     try {
@@ -340,7 +341,7 @@ app.get('/api/qrcode', async (req, res) => {
         }
         const qrCodesWithImage = await Promise.all(
             qrCodes.map(async (doc) => {
-                const qrDataUrl = await QRcode.toDataURL(`http://localhost:3000/redirect/${doc._id}`);
+                const qrDataUrl = await QRcode.toDataURL(`${BASE_URL}/redirect/${doc._id}`);
                 return {
                     ...doc.toObject(),
                     qrDataUrl
