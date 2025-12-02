@@ -65,7 +65,7 @@ app.get('/profile', async (req, res) => {
         const profile = await User.find({ _id: userId }).select('firstName lastName email');
         return res.status(200).json(profile);
     } catch (error) {
-        return res.status(500).json({ msg: 'Unauthorized' })
+        return res.status(500).json({ msg: token || 'Unauthorized' })
     }
 });
 //Login and signup routes would go here
