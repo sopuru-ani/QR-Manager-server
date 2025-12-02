@@ -57,7 +57,7 @@ app.get('/', (req, res) => {
 app.get('/profile', async (req, res) => {
     const token = req.cookies.token;
     if (!token) {
-        return res.status(401).json({ msg: 'Unauthorized' });
+        return res.status(401).json({ msg: token || 'Unauthorized' });
     }
     try {
         const decoded = jwt.verify(token, secretKey);
@@ -65,7 +65,7 @@ app.get('/profile', async (req, res) => {
         const profile = await User.find({ _id: userId }).select('firstName lastName email');
         return res.status(200).json(profile);
     } catch (error) {
-        return res.status(500).json({ msg: token || 'Unauthorized' })
+        return res.status(500).json({ msg: 'Unauthorized' })
     }
 });
 //Login and signup routes would go here
