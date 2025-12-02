@@ -163,7 +163,8 @@ app.post('/signup', async (req, res) => {
             httpOnly: true,    // Prevent frontend JS from reading it
             secure: true,     // Set to true in production (HTTPS)
             sameSite: 'None',
-          path: '/',
+            path: '/',
+            maxAge: 24*60*60*1000
         });
         return res.status(201).json({ msg: 'Account created successfully. redirecting...' });
     } catch (error) {
@@ -188,6 +189,7 @@ app.post('/login', async (req, res) => {
               secure: true,      // Required when using HTTPS domains
               sameSite: 'None',   // Required for cross-site cookies
               path: '/',
+              maxAge: 24*60*60*1000
             });
             return res.status(200).json({ msg: 'Login successful. redirecting...' });
         } else {
