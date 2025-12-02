@@ -162,7 +162,8 @@ app.post('/signup', async (req, res) => {
         res.cookie('token', token, {
             httpOnly: true,    // Prevent frontend JS from reading it
             secure: true,     // Set to true in production (HTTPS)
-            sameSite: 'None'
+            sameSite: 'None',
+          path: '/',
         });
         return res.status(201).json({ msg: 'Account created successfully. redirecting...' });
     } catch (error) {
@@ -185,7 +186,8 @@ app.post('/login', async (req, res) => {
             res.cookie('token', token, {
               httpOnly: true,
               secure: true,      // Required when using HTTPS domains
-              sameSite: 'None'   // Required for cross-site cookies
+              sameSite: 'None',   // Required for cross-site cookies
+              path: '/',
             });
             return res.status(200).json({ msg: 'Login successful. redirecting...' });
         } else {
@@ -200,7 +202,8 @@ app.post('/logout', (req, res) => {
     res.clearCookie('token', {
         httpOnly: true,
         secure: true,
-        sameSite: 'none'
+        sameSite: 'None',
+      path: '/',
     });
     res.status(200).send('Logged out successfully');
 });
@@ -237,7 +240,8 @@ app.delete('/account', async (req, res) => {
         res.clearCookie('token', {
             httpOnly: true,
             secure: true,
-            sameSite: 'none'
+            sameSite: 'None',
+          path: '/',
         });
         res.status(200).json({ msg: 'Account deleted successfully' });
     } catch (error) {
