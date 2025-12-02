@@ -194,7 +194,7 @@ app.post('/login', async (req, res) => {
             const token = jwt.sign({ userId: user._id }, secretKey, { expiresIn: exp });
             res.cookie('token', token, {
               httpOnly: true,
-              secure: false,      // Required when using HTTPS domains
+              secure: true,      // Required when using HTTPS domains
               sameSite: 'None',   // Required for cross-site cookies
               path: '/',
               maxAge: 24*60*60*1000
