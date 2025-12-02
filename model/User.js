@@ -14,12 +14,28 @@ const UserSchema = new mongoose.Schema({
     email: {
         type: String,
         required: [true, 'must provide email'],
-        trim: true
+        trim: true,
+        unique: true
     },
     hashedPassword: {
         type: String,
-        required: [true, 'must provide password'],
-        trim: true
+        required: false,
+        trim: true,
+        default: ''
+    },
+    avatar: {
+        type: String,
+        required: false,
+        default: ''
+    },
+    googleId: {
+        type: String,
+        required: false,
+        default: ''
+    },
+    googleAuth: {
+        type: Boolean,
+        default: false
     }
 });
 
