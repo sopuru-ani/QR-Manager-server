@@ -196,8 +196,7 @@ app.post('/login', async (req, res) => {
               httpOnly: true,
               secure: true,      // Required when using HTTPS domains
               sameSite: 'None',   // Required for cross-site cookies
-              path: '/',
-              maxAge: 24*60*60*1000
+              domain: '.qr-manager.net'
             });
             return res.status(200).json({ msg: 'Login successful. redirecting...' });
         } else {
