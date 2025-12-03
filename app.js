@@ -171,8 +171,7 @@ app.post('/signup', async (req, res) => {
             httpOnly: true,    // Prevent frontend JS from reading it
             secure: true,     // Set to true in production (HTTPS)
             sameSite: 'None',
-            path: '/',
-            maxAge: 24*60*60*1000
+            domain: '.qr-manager.net'
         });
         return res.status(201).json({ msg: 'Account created successfully. redirecting...' });
     } catch (error) {
