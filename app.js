@@ -24,7 +24,8 @@ const PORT = process.env.PORT || 3000;
 const secretKey = process.env.JWT_SECRET;
 const exp = process.env.JWT_LIMIT;
 const resend = new Resend(process.env.RESEND_API_KEY);
-const BASE_URL = "https://qr-manager-server-gec1.onrender.com";
+// const BASE_URL = "https://qr-manager-server-gec1.onrender.com";
+const BASE_URL = "https://server.qr-manager.net";
 
 
 
@@ -65,12 +66,13 @@ app.get('/', (req, res) => {
 app.get('/profile', async (req, res) => {
     const token = req.cookies.token;
     if (!token) {
-        return res.status(401).json({ msg: token || 'Unauthorized' });
+        return res.status(401).json({ msg: 'Unauthorized' });
     }
     try {
         const decoded = jwt.verify(token, secretKey);
         const userId = decoded.userId;
-        const profile = await User.find({ _id: userId }).select('firstName lastName email');
+        const profile = await User.find({ _id: userId }).select('firstName lastName email avatar googleAuth hashedPassword');
+        console.log(profile);
         return res.status(200).json(profile);
     } catch (error) {
         return res.status(500).json({ msg: 'Unauthorized' })
@@ -179,22 +181,81 @@ app.post('/signup', async (req, res) => {
     }
 });
 
+const loginUser = (user, res) => {
+    const token = jwt.sign({ userId: user._id }, secretKey, { expiresIn: exp });
+
+    res.cookie('token', token, {
+          httpOnly: true,    // Prevent frontend JS from reading it
+          secure: true,     // Set to true in production (HTTPS)
+          sameSite: 'None',
+          domain: '.qr-manager.net'
+    });
+
+    res.status(200).json({ msg: "Login Successful! Redirecting to dashboard now..." });
+}
+app.post('/googlesignup', async (req, res) => {
+    try {
+        const { googleId, name, email, picture } = req.body;
+        console.log(req.body);
+        // console.log(email);
+
+        const user = await User.findOne({ email: email });
+        console.log(user);
+
+        if (user && user.googleAuth) {
+            return loginUser(user, res);
+        }
+
+        if (user && !user.googleAuth) {
+            user.googleAuth = true;
+            user.googleId = googleId;
+            user.avatar = picture;
+            await user.save();
+            return loginUser(user, res);
+        }
+        // const [firstName, ...rest] = name.split(" ");
+        // const lastName = rest.join(" ");
+        console.log("last step");
+        const newUser = new User({
+            firstName: name.split(" ")[0] || " ",
+            lastName: name.split(" ")[1] || " ",
+            email: email,
+            googleAuth: true,
+            googleId: googleId,
+            avatar: picture,
+        });
+        console.log(newUser);
+
+        await newUser.save();
+        return loginUser(newUser, res);
+
+    } catch (error) {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+});
+
 app.post('/login', async (req, res) => {
     if (!req.body) {
         return res.status(400).json({ msg: 'No data provided' });
     }
+
     const { email, password } = req.body;
+
     const user = await User.findOne({ email: email });
+
     if (!user) {
         return res.status(400).json({ msg: 'Invalid email or password' });
+    }
+    if (user.googleAuth === true && !user.hashedPassword) {
+        return res.status(400).json({ msg: "This email is registered with Google. Sign in using Google instead." });
     }
     try {
         if (await bcrypt.compare(password, user.hashedPassword)) {
             const token = jwt.sign({ userId: user._id }, secretKey, { expiresIn: exp });
             res.cookie('token', token, {
-              httpOnly: true,
-              secure: true,      // Required when using HTTPS domains
-              sameSite: 'None',   // Required for cross-site cookies
+              httpOnly: true,    // Prevent frontend JS from reading it
+              secure: true,     // Set to true in production (HTTPS)
+              sameSite: 'None',
               domain: '.qr-manager.net'
             });
             return res.status(200).json({ msg: 'Login successful. redirecting...' });
@@ -206,12 +267,71 @@ app.post('/login', async (req, res) => {
     }
 });
 
+app.patch('/addpassword', async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ msg: 'Unauthorized' });
+    try {
+        const decoded = jwt.verify(token, secretKey);
+        const userId = decoded.userId;
+        if (!req.body) {
+            return res.status(400).json({ msg: 'Both fields are required' });
+        }
+        const { password, confirmPassword } = req.body;
+        if (!password || !confirmPassword) {
+            return res.status(400).json({ msg: 'Both fields are required' });
+        }
+        if (password !== confirmPassword) {
+            return res.status(400).json({ msg: 'Both passwords must match' });
+        }
+        const user = await User.findOne({ _id: userId });
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(password, salt);
+        user.hashedPassword = hashedPassword;
+        await user.save();
+        return res.status(200).json({ msg: 'Password added successfully!' });
+    } catch (error) {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+});
+
+app.patch('/changepassword', async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) return res.status(401).json({ msg: 'Unauthorized' });
+    try {
+        const decoded = jwt.verify(token, secretKey);
+        const userId = decoded.userId;
+        if (!req.body) {
+            return res.status(400).json({ msg: 'Both fields are required' });
+        }
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        if (!newPassword || !confirmPassword || !currentPassword) {
+            return res.status(400).json({ msg: 'All fields are required' });
+        }
+        const user = await User.findOne({ _id: userId });
+        const passwordMatch = await bcrypt.compare(currentPassword, user.hashedPassword);
+        if (!passwordMatch) {
+            return res.status(400).json({ msg: 'Current password is invalid' });
+        }
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ msg: 'Both passwords must match' });
+        }
+        const salt = await bcrypt.genSalt();
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+        user.hashedPassword = hashedPassword;
+        await user.save();
+        return res.status(200).json({ msg: 'Password changed successfully!' });
+    } catch (error) {
+        return res.status(401).json({ msg: 'Unauthorized' });
+    }
+
+});
+
 app.post('/logout', (req, res) => {
     res.clearCookie('token', {
         httpOnly: true,
         secure: true,
         sameSite: 'None',
-      path: '/',
+        domain: '.qr-manager.net'
     });
     res.status(200).send('Logged out successfully');
 });
@@ -246,10 +366,10 @@ app.delete('/account', async (req, res) => {
         await QRCode.deleteMany({ createdBy: userId });
 
         res.clearCookie('token', {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'None',
-          path: '/',
+          httpOnly: true,
+          secure: true,
+          sameSite: 'None',
+          domain: '.qr-manager.net'
         });
         res.status(200).json({ msg: 'Account deleted successfully' });
     } catch (error) {
