@@ -21,17 +21,14 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: false,
         trim: true,
-        default: ''
     },
     avatar: {
         type: String,
         required: false,
-        default: ''
     },
     googleId: {
         type: String,
         required: false,
-        default: ''
     },
     googleAuth: {
         type: Boolean,
