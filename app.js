@@ -591,6 +591,124 @@ app.get('/api/overview', async (req, res) => {
     }
 });
 
+app.post("/forgot-password", async (req, res) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ msg: "Email is required." });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ msg: "No account with this email exists." });
+
+    // Generate token
+    const token = crypto.randomBytes(32).toString("hex");
+
+    // Save hashed version (safer)
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    user.resetToken = hashedToken;
+    user.resetTokenExpires = Date.now() + (1000 * 60 * 10); // 15 mins expiration
+    await user.save();
+
+    const resetURL = `https://qr-manager.net/reset-password?token=${token}`;
+
+    // Send email via Resend
+    await resend.emails.send({
+        from: "QR Manager <no-reply@qr-manager.net>",
+        to: user.email,
+        subject: "Reset Your QR-Manager Password",
+        html: `
+  <div style="font-family:Arial, Helvetica, sans-serif; padding:20px; background:#f7f8fa;">
+      
+      <div style="max-width:520px; margin:auto; background:white; padding:30px; border-radius:10px; 
+                  border:1px solid #e5e7eb; box-shadow:0 4px 18px rgba(0,0,0,0.04);">
+
+          <div style="text-align:center;">
+              <h1 style="margin:0; font-size:24px; color:#1e293b; font-weight:700;">
+                QR-Manager Password Reset
+              </h1>
+              <p style="color:#475569; font-size:14px; margin-top:8px;">
+                  You requested to reset your password.<br/>
+                  This link expires in <strong>15 minutes</strong>.
+              </p>
+          </div>
+
+          <div style="margin:26px 0; text-align:center;">
+              <a href="${resetURL}" 
+                 style="background:#2563eb; color:white; padding:12px 22px; font-size:15px; 
+                        font-weight:600; border-radius:8px; text-decoration:none; display:inline-block;">
+                 Reset Password
+              </a>
+          </div>
+
+          <p style="color:#475569; font-size:14px; line-height:1.6;">
+              If the button doesn’t work, paste this link in your browser:
+              <br><br>
+              <span style="display:block; word-break:break-all; color:#1d4ed8; font-size:13px;">
+                  ${resetURL}
+              </span>
+          </p>
+
+          <hr style="margin:30px 0; border:none; border-top:1px solid #e2e8f0" />
+
+          <p style="font-size:12px; color:#94a3b8; text-align:center;">
+              If you didn’t request this, you can safely ignore this email.
+          </p>
+      </div>
+
+      <p style="text-align:center; margin-top:14px; font-size:12px; color:#a1a1aa;">
+          © 2025 QR-Manager. All rights reserved.
+      </p>
+
+  </div>
+  `
+    });
+
+    return res.status(200).json({ msg: "Password reset email sent." });
+});
+
+app.post("/verify-token", async (req, res) => {
+    const { token } = req.body;
+
+    if (!token) return res.status(400).json({ msg: "Data missing." });
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+        resetToken: hashedToken,
+        resetTokenExpires: { $gt: Date.now() } // not expired
+    });
+
+    if (!user) return res.status(401).json({ msg: "Invalid or expired reset token." });
+    return res.status(200).json({ msg: "Valid token" });
+
+});
+
+app.post("/reset-password", async (req, res) => {
+    const { token, password, confirmPassword } = req.body;
+
+    if (!token || !password || !confirmPassword) return res.status(400).json({ msg: "Data missing." });
+    if (password !== confirmPassword) return res.status(400).json({ msg: "Passwords must match" });
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+        resetToken: hashedToken,
+        resetTokenExpires: { $gt: Date.now() } // not expired
+    });
+
+    if (!user) return res.status(401).json({ msg: "Invalid or expired reset token." });
+
+    // hash new password
+    const salt = await bcrypt.genSalt();
+    user.hashedPassword = await bcrypt.hash(password, salt);
+
+    // clear token so link can't be reused
+    user.resetToken = undefined;
+    user.resetTokenExpires = undefined;
+
+    await user.save();
+
+    return res.json({ msg: "Password reset successful. redirecting to signup..." });
+});
+
 
 const start = async () => {
     try {
