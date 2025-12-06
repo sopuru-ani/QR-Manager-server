@@ -8,6 +8,7 @@ import QRcode from 'qrcode';
 import mongoose from 'mongoose';
 import { Resend } from 'resend';
 import { OAuth2Client } from 'google-auth-library';
+import crypto from 'crypto';
 
 import connectDB from './db/connect.js';
 import User from './model/User.js';
