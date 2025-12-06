@@ -33,7 +33,9 @@ const UserSchema = new mongoose.Schema({
     googleAuth: {
         type: Boolean,
         default: false
-    }
+    },
+    resetToken: String,
+    resetTokenExpires: Date
 });
 
 export default mongoose.model('User', UserSchema);
