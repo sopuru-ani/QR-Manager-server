@@ -100,24 +100,46 @@ app.post('/auth/send-code', async (req, res) => {
             { upsert: true, new: true }
         );
         await resend.emails.send({
-            // from: "QR Manager <onboarding@resend.dev>",
-          from: "QR Manager <no-reply@qr-manager.net>",
+            from: "QR Manager <no-reply@qr-manager.net>",
             to: email,
-            subject: "Your code",
+            subject: "Your QR-Manager Verification Code",
             html: `
-        <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f8f8f8;">
-            <h2 style="color: #333;">Your Verification Code</h2>
-            <p style="font-size: 16px; color: #555;">
-                Use the code below to verify your email:
-            </p>
-            <div style="margin: 20px auto; padding: 15px 30px; background-color: #4caf50; color: white; font-size: 24px; font-weight: bold; border-radius: 8px; display: inline-block;">
-                ${code}
-            </div>
-            <p style="font-size: 14px; color: #999; margin-top: 30px;">
-                If you did not request this, please ignore this email.
-            </p>
-        </div>
-    `
+  <div style="font-family:Arial, Helvetica, sans-serif; padding:20px; background:#f7f8fa;">
+      
+      <div style="max-width:520px; margin:auto; background:white; padding:30px; border-radius:10px; 
+                  border:1px solid #e5e7eb; box-shadow:0 4px 18px rgba(0,0,0,0.04);">
+
+          <div style="text-align:center;">
+              <h1 style="margin:0; font-size:24px; color:#1e293b; font-weight:700;">
+                  Email Verification
+              </h1>
+              <p style="color:#475569; font-size:14px; margin-top:8px; line-height:1.5;">
+                  Use the code below to verify your email.<br/>
+                  This code expires in <strong>10 minutes</strong>.
+              </p>
+          </div>
+
+          <div style="margin:26px 0; text-align:center;">
+              <div style="background:#4caf50; color:white; padding:14px 32px; 
+                          font-size:22px; font-weight:700; letter-spacing:2px; 
+                          border-radius:8px; display:inline-block;">
+                  ${code}
+              </div>
+          </div>
+
+          <hr style="margin:30px 0; border:none; border-top:1px solid #e2e8f0" />
+
+          <p style="font-size:12px; color:#94a3b8; text-align:center;">
+              If you didn’t request this, you can safely ignore this email.
+          </p>
+      </div>
+
+      <p style="text-align:center; margin-top:14px; font-size:12px; color:#4caf50;">
+          © 2025 QR-Manager. All rights reserved.
+      </p>
+
+  </div>
+  `
         });
         res.status(200).json({ msg: true });
     } catch (error) {
