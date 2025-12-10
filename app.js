@@ -33,11 +33,11 @@ const BASE_URL = "https://server.qr-manager.net";
 // Middleware
 app.set("trust proxy", 1);
 const corsOptions = {
-  origin: ["https://qr-manager-beige.vercel.app", "https://www.qr-manager.net"],
-  // origin: "https://qr-manager-beige.vercel.app",
-  credentials: true,  // important for cookies
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+    origin: ["https://qr-manager-beige.vercel.app", "https://www.qr-manager.net"],
+    // origin: "https://qr-manager-beige.vercel.app",
+    credentials: true,  // important for cookies
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
@@ -73,7 +73,7 @@ app.get('/profile', async (req, res) => {
         const decoded = jwt.verify(token, secretKey);
         const userId = decoded.userId;
         const profile = await User.find({ _id: userId }).select('firstName lastName email avatar googleAuth hashedPassword');
-        console.log(profile);
+
         return res.status(200).json(profile);
     } catch (error) {
         return res.status(500).json({ msg: 'Unauthorized' })
@@ -143,8 +143,8 @@ app.post('/auth/send-code', async (req, res) => {
         });
         res.status(200).json({ msg: true });
     } catch (error) {
-        console.log(error);
-        res.status(400).json({msg: error});
+
+        res.status(400).json({ msg: error });
     }
 
 
@@ -208,10 +208,10 @@ const loginUser = (user, res) => {
     const token = jwt.sign({ userId: user._id }, secretKey, { expiresIn: exp });
 
     res.cookie('token', token, {
-          httpOnly: true,    // Prevent frontend JS from reading it
-          secure: true,     // Set to true in production (HTTPS)
-          sameSite: 'None',
-          domain: '.qr-manager.net'
+        httpOnly: true,    // Prevent frontend JS from reading it
+        secure: true,     // Set to true in production (HTTPS)
+        sameSite: 'None',
+        domain: '.qr-manager.net'
     });
 
     res.status(200).json({ msg: "Login Successful! Redirecting to dashboard now..." });
@@ -219,11 +219,11 @@ const loginUser = (user, res) => {
 app.post('/googlesignup', async (req, res) => {
     try {
         const { googleId, name, email, picture } = req.body;
-        console.log(req.body);
-        // console.log(email);
+
+        // 
 
         const user = await User.findOne({ email: email });
-        console.log(user);
+
 
         if (user && user.googleAuth) {
             return loginUser(user, res);
@@ -238,7 +238,7 @@ app.post('/googlesignup', async (req, res) => {
         }
         // const [firstName, ...rest] = name.split(" ");
         // const lastName = rest.join(" ");
-        console.log("last step");
+
         const newUser = new User({
             firstName: name.split(" ")[0] || " ",
             lastName: name.split(" ")[1] || " ",
@@ -247,7 +247,7 @@ app.post('/googlesignup', async (req, res) => {
             googleId: googleId,
             avatar: picture,
         });
-        console.log(newUser);
+
 
         await newUser.save();
         return loginUser(newUser, res);
@@ -276,10 +276,10 @@ app.post('/login', async (req, res) => {
         if (await bcrypt.compare(password, user.hashedPassword)) {
             const token = jwt.sign({ userId: user._id }, secretKey, { expiresIn: exp });
             res.cookie('token', token, {
-              httpOnly: true,    // Prevent frontend JS from reading it
-              secure: true,     // Set to true in production (HTTPS)
-              sameSite: 'None',
-              domain: '.qr-manager.net'
+                httpOnly: true,    // Prevent frontend JS from reading it
+                secure: true,     // Set to true in production (HTTPS)
+                sameSite: 'None',
+                domain: '.qr-manager.net'
             });
             return res.status(200).json({ msg: 'Login successful. redirecting...' });
         } else {
@@ -389,10 +389,10 @@ app.delete('/account', async (req, res) => {
         await QRCode.deleteMany({ createdBy: userId });
 
         res.clearCookie('token', {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'None',
-          domain: '.qr-manager.net'
+            httpOnly: true,
+            secure: true,
+            sameSite: 'None',
+            domain: '.qr-manager.net'
         });
         res.status(200).json({ msg: 'Account deleted successfully' });
     } catch (error) {
@@ -737,10 +737,10 @@ const start = async () => {
     try {
         await connectDB(process.env.MONGO_URI);
         app.listen(PORT, '0.0.0.0', () => {
-            console.log(`server is listening on port ${PORT}...`);
+
         });
     } catch (error) {
-        console.log(error);
+
     }
 }
 
