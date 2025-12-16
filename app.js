@@ -594,15 +594,25 @@ app.get('/api/overview', async (req, res) => {
         let scans = [];
         try {
             scans = await ScanLog.aggregate([
-                { $match: { userId: new mongoose.Types.ObjectId(userId), timestamp: { $gte: last7Days } } },
-                {
-                    $group: {
-                        _id: { $dateToString: { format: "%Y-%m-%d", date: "$timestamp" } },
-                        count: { $sum: 1 },
-                    },
-                },
-                { $sort: { _id: 1 } }, // oldest to newest
-            ]);
+  {
+    $match: {
+      userId: new mongoose.Types.ObjectId(userId),
+      createdAt: { $gte: last7Days }
+    }
+  },
+  {
+    $group: {
+      _id: {
+        $dateToString: {
+          format: "%Y-%m-%d",
+          date: "$createdAt"
+        }
+      },
+      count: { $sum: 1 }
+    }
+  },
+  { $sort: { _id: 1 } }
+]);
         } catch (error) {
             console.error("Scan log error:", error);
             scans = [];
